@@ -1,0 +1,112 @@
+project:
+  name: "football-match-intelligence-system"
+  version: "0.1.0"
+  description: "End-to-end ML system for football/soccer event-data analysis, SQL feature storage, model training, and API-based prediction"
+
+paths:
+  data_dir: "data"
+  raw_data_dir:  "data/raw"
+  processed_data_dir: "data/processed"
+  external_data_dir: "data/external"
+
+  models_dir: "models"
+  reports_dir: "reports"
+  notebooks_dir: "notebooks"
+
+  schema_path: "sql/schema.sql"
+  queries_path: "sql/sample_queries.sql"
+
+data:
+  source_name: "StatsBomb Open Data"
+  dataset_type: "soccer_event_data"
+  target_task: "possession_danger_prediction"
+
+  matches_file: "data/raw/matches.json"
+  events_dir: "data/raw/events"
+  lineups_dir: "data/raw/lineups"
+
+  processed_events_file: "data/processed/events_cleaned.csv"
+  possession_features_file: "data/processed/possession_features.csv"
+
+database:
+  dialect: "mysql"
+  host: "localhost"
+  port: 3306
+  database_name: "football_ml"
+  username_env_var:
+  password_env_var:
+
+  tables:
+    matches: "matches"
+    teams: "teams"
+    players: "players"
+    events: "events"
+    possessions: "possessions"
+    model_runs: "model_runs"
+    predictions: "predictions"
+
+features:
+  target_column: "is_dangerous_possession"
+  id_columns:
+    - "match_id"
+    - "possession_id"
+  numeric_features:
+    - "possession_duration"
+    - "num_events"
+    - "num_passes"
+    - "start_x"
+    - "start_y"
+    - "end_x"
+    - "end_y"
+    - "distance_to_goal"
+    - "progressive_distance"
+    - "avg_event_distance_to_goal"
+  categorical_features:
+    - "team_name"
+    - "competition_name"
+    - "possession_start_type"
+
+  test_size: 0.2
+  random_state: 42
+
+model:
+  problem_type: "binary_classification"
+  baseline_model: "logistic_regression"
+  candidate_models:
+    - "logistic regression"
+    - "random_forest"
+    - "gradient_boosting"
+  model_output_path: "models/best_model.joblib"
+  preprocessing_output_path: "models/preprocessor.joblib"
+
+evaluation:
+  primary_metric: "roc_auc"
+  secondary_metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+
+  metrics_output_path: "reports/metrics.json"
+  confusion_matrix_path: "reports/confusion_matrix.png"
+  feature_importance_path: "reports/feature_importance.png"
+
+mlflow:
+  tracking_uri: "mlruns"
+  experiment_name: "soccer-possession-danger-prediction"
+  log_models: true
+
+api:
+  app_name: "soccer-match-intelligence-api"
+  host: "0.0.0.0"
+  port: 8000
+
+  endpoints:
+    health: "/health"
+    predict: "/predict"
+    model_info: "/model-info"
+
+docker:
+  api_service_name: "soccer-api"
+  mysql_service_name: "soccer-mysql"
+  compose_file: "docker-compose.yml"

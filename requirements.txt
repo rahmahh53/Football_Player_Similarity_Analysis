@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+PyYAML
+python-dotenv
+SQLAlchemy
+pymysql
+mlflow
+fastapi
+uvicorn
+joblib
+requests
