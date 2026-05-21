@@ -8,7 +8,8 @@ The first modeling task is:
 
 > Predict whether a possession sequence is likely to become dangerous.
 A dangerous possession may be defined as a possession that directly leads to a meaningful goal-scoring opportunity. In the first version, this may be labeled using outcomes such as a shot, a touch or pass into the penalty box, or another attacking event close to goal.
-
+_is_dangerous_possession = 1 if possession contains a shot, 0 otherwise
+This project uses StatsBomb Open Data, an open-source soccer event dataset. The dataset contains match-level event data, including passes, carries, shots, fouls, pressures, and other in-game actions.
 ## Planned System Design
 
 ```text
