@@ -3,27 +3,13 @@ import yaml
 
 
 def load_config(config_path="config.yaml"):
-    """
-    Load the project configuration file.
-
-    Parameters
-    ----------
-    config_path : str
-        Path to the config.yaml file.
-
-    Returns
-    -------
-    dict
-        The configuration settings as a Python dictionary.
-    """
-
     config_path = Path(config_path)
 
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
     with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+        config = yaml.safe_load(file)  # loads the yaml file and converts it into a dictionary
 
     return config
 

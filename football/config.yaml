@@ -5,9 +5,10 @@ project:
 
 paths:
   data_dir: "data"
-  raw_data_dir:  "data/raw"
-  processed_data_dir: "data/processed"
-  external_data_dir: "data/external"
+  raw_data_dir:  "data/raw_data"
+  processed_data_dir: "data/processed_data"
+  events_dir: "data/raw_data/events"
+  processed_event_dir: "data/processed_data/events_flat.csv"
 
   models_dir: "models"
   reports_dir: "reports"
