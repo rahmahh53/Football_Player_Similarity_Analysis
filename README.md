@@ -1,32 +1,209 @@
-# Football/Soccer Match Intelligence System
+# Football Match Intelligence System
 
-## Project Overview
+An end-to-end football analytics and machine learning pipeline built using StatsBomb Open Data.
 
-This project is an end-to-end machine learning and MLOps system for analyzing football/soccer match event data. The goal is to build a system that can ingest open-source football/soccer event data, store it in a MySQL database, engineer useful match and possession-level features, train machine learning models, track experiments, and eventually serve predictions through an API.
+The project demonstrates data engineering, relational database design, SQL analytics, feature engineering, machine learning, and MLOps by building a complete pipeline from raw event data to deployable machine learning models.
 
-The first modeling task is:
+---
+
+## Project Goal
+
+The long-term goal of this project is to build an intelligent football analytics platform capable of identifying dangerous attacking possessions and generating player and team insights from event-level match data.
+
+The initial machine learning task is:
 
 > Predict whether a possession sequence is likely to become dangerous.
-A dangerous possession may be defined as a possession that directly leads to a meaningful goal-scoring opportunity. In the first version, this may be labeled using outcomes such as a shot, a touch or pass into the penalty box, or another attacking event close to goal.
-_is_dangerous_possession = 1 if possession contains a shot, 0 otherwise
-This project uses StatsBomb Open Data, an open-source soccer event dataset. The dataset contains match-level event data, including passes, carries, shots, fouls, pressures, and other in-game actions.
-## Planned System Design
+
+For the first version:
+
+```
+is_dangerous_possession = 1
+```
+
+if a possession contains a shot.
+
+Otherwise
+
+```
+is_dangerous_possession = 0
+```
+
+---
+
+## Dataset
+
+This project uses the **StatsBomb Open Data** dataset.
+
+The dataset contains detailed event-level information for professional football matches including:
+
+- Passes
+- Carries
+- Shots
+- Dribbles
+- Duels
+- Fouls
+- Pressures
+- Ball recoveries
+- Possessions
+- Match metadata
+- Player metadata
+
+---
+
+## Technology Stack
+
+- Python
+- Pandas
+- MySQL
+- SQLAlchemy
+- Jupyter Notebook
+- Parquet
+- Scikit-learn *(planned)*
+- MLflow *(planned)*
+- FastAPI *(planned)*
+- Docker *(planned)*
+
+---
+
+## Project Architecture
 
 ```text
-Raw soccer event data
-        ↓
-Data cleaning and preprocessing
-        ↓
-MySQL database
-        ↓
-SQL queries and feature engineering
-        ↓
-Machine learning model training
-        ↓
-Experiment tracking with MLflow
-        ↓
-Model evaluation and error analysis
-        ↓
-FastAPI prediction service
-        ↓
-Dockerized application
+StatsBomb Open Data
+        │
+        ▼
+JSON Parsing
+(parse_data.py / parse_events.py)
+        │
+        ▼
+Normalized DataFrames
+        │
+        ├──────────────┐
+        ▼              ▼
+ Core Tables      Event Parquet Batches
+        │              │
+        └──────┬───────┘
+               ▼
+        MySQL Database
+               ▼
+        SQL Analytics
+               ▼
+      Feature Engineering
+               ▼
+     Machine Learning Models
+               ▼
+          MLflow Tracking
+               ▼
+        FastAPI Inference
+               ▼
+      Docker Deployment
+```
+
+---
+
+## Database Schema
+
+The relational database is normalized into separate tables including:
+
+### Core Tables
+
+- competitions
+- seasons
+- countries
+- teams
+- managers
+- matches
+- players
+- lineups
+- player_positions
+- team_managers
+- cards
+
+### Event Tables
+
+- events
+- passes
+- shots
+- carries
+- dribbles
+- duels
+
+---
+
+## Current Progress
+
+### ✅ Completed
+
+- Data ingestion from StatsBomb Open Data
+- JSON parsing pipeline
+- Event parsing pipeline
+- Relational database design
+- MySQL schema implementation
+- Batch loading pipeline
+- SQL analytics
+- Football event querying
+- Player passing analysis
+
+### 🚧 In Progress
+
+- Feature engineering
+- Player scouting metrics
+- Possession sequence engineering
+
+### 📌 Planned
+
+- Possession classification model
+- MLflow experiment tracking
+- FastAPI prediction API
+- Docker deployment
+- CI/CD pipeline
+
+---
+
+## Repository Structure
+
+```text
+football_project/
+│
+├── src/
+│   ├── parse_data.py
+│   ├── parse_events.py
+│   └── load_data.py
+│
+├── database/
+│   ├── schema.sql
+│   ├── analysis_queries.sql
+│   └── validation_queries.sql
+│
+├── notebooks/
+├── data/
+├── models/
+├── docker/
+├── tests/
+└── README.md
+```
+
+---
+
+## Current Focus
+
+The project is currently focused on building SQL-based football analytics to generate player and possession-level features that will later serve as inputs to machine learning models.
+
+Example analyses currently implemented include:
+
+- Passing leaders
+- Pass completion percentage
+- Home win percentage
+- Competition summaries
+- Event-type distributions
+
+Additional player and team scouting metrics are currently being developed.
+
+# Sample Processed Data
+
+This directory contains small samples of the tables generated by the
+StatsBomb parsing pipeline.
+
+The complete raw and processed datasets are excluded from version control
+because they are large and reproducible.
+
+Run `src/parse_events.py` to generate the full event Parquet batches.
