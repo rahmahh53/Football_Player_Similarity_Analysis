@@ -4,7 +4,7 @@ from pathlib import Path
 import argparse
 
 
-def parse_event_files(event_files):
+def parse_event_files(event_files, table=None):
     events_list = []
     passes_list = []
     shots_list = []
@@ -43,9 +43,10 @@ def parse_event_files(event_files):
                 "location_y": location[1] if location else None
             }
 
-            events_list.append(event_dict)
+            if table in (None, 'events'):
+                 events_list.append(event_dict)
 
-            if event["type"]["name"] == "Pass":
+            if table in (None, "passes") and event["type"]["name"] == "Pass":
                 pass_data = event.get("pass") or {}
                 recipient = pass_data.get("recipient") or {}
                 end_location = pass_data.get("end_location")
@@ -65,7 +66,7 @@ def parse_event_files(event_files):
 
                 passes_list.append(passes_dict)
 
-            if event["type"]["name"] == "Shot":
+            if table in (None, "shots") and event["type"]["name"] == "Shot":
                 shot_data = event.get("shot") or {}
 
                 outcome = shot_data.get("outcome")
@@ -90,7 +91,7 @@ def parse_event_files(event_files):
 
                 shots_list.append(shots_dict)
 
-            if event["type"]["name"] == "Carry":
+            if table in (None, "carries") and event["type"]["name"] == "Carry":
                 carry_data = event.get("carry") or {}
 
                 carries_dict = {
@@ -101,7 +102,7 @@ def parse_event_files(event_files):
 
                 carries_list.append(carries_dict)
 
-            if event["type"]["name"] == "Dribble":
+            if table in (None, "dribbles") and event["type"]["name"] == "Dribble":
                 dribble_data = event.get("dribble") or {}
                 outcome = dribble_data.get("outcome")
 
@@ -113,13 +114,15 @@ def parse_event_files(event_files):
 
                 dribbles_list.append(dribbles_dict)
 
-            if event["type"]["name"] == "Duel":
+            if table in (None, "duels") and event["type"]["name"] == "Duel":
                 duel_data = event.get("duel") or {}
                 duel_type = duel_data.get("type")
+                outcome = duel_data.get("outcome")
 
                 duels_dict = {
                     "event_id": event["id"],
-                    "duel_type_id": duel_type["id"] if duel_type else None
+                    "duel_type_id": duel_type["id"] if duel_type else None,
+                    "outcome_id": outcome["id"] if outcome else None
                 }
 
                 duels_list.append(duels_dict)
@@ -131,9 +134,9 @@ def parse_event_files(event_files):
             "technique_id", "body_part_id", "shot_type_id", "end_location_x", "end_location_y", "end_location_z"])
     carries_df = pd.DataFrame(carries_list, columns=["event_id", "end_location_x", "end_location_y"])
     dribbles_df = pd.DataFrame(dribbles_list, columns=["event_id", "nutmeg", "outcome_id"])
-    duels_df = pd.DataFrame(duels_list, columns=["event_id", "duel_type_id"])
+    duels_df = pd.DataFrame(duels_list, columns=["event_id", "duel_type_id", "outcome_id"])
 
-    return {
+    tables = {
         "events": events_df,
         "passes": passes_df,
         "shots": shots_df,
@@ -142,8 +145,12 @@ def parse_event_files(event_files):
         "duels": duels_df,
     }
 
+    if table is not None:
+        return {table: tables[table]}
 
-def process_events_in_batches(events_dir, output_dir, batch_size=10, max_batches=None):
+    return tables
+
+def process_events_in_batches(events_dir, output_dir, batch_size=10, max_batches=None, table=None):
     events_dir = Path(events_dir)
     output_dir = Path(output_dir)
 
@@ -162,8 +169,8 @@ def process_events_in_batches(events_dir, output_dir, batch_size=10, max_batches
 
     existing_parquet_files = list(output_dir.glob("*.parquet"))
 
-    if existing_parquet_files:
-        raise FileExistsError("Output directory already contains Parquet files: "f"{output_dir.resolve()}")
+    #if existing_parquet_files:
+    #    raise FileExistsError("Output directory already contains Parquet files: "f"{output_dir.resolve()}")
 
     for batch_number, start in enumerate(range(0, len(event_files), batch_size)):
         if (max_batches is not None and batch_number >= max_batches):
@@ -171,7 +178,7 @@ def process_events_in_batches(events_dir, output_dir, batch_size=10, max_batches
 
         batch_files = event_files[start:start + batch_size]
 
-        tables = parse_event_files(batch_files)
+        tables = parse_event_files(batch_files, table=table)
 
         row_counts = ",".join(f"{table_name}={len(dataframe)}" for table_name, dataframe in tables.items())
 
@@ -190,7 +197,8 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", required=True, help="Path to the directory for the processed events files")
     parser.add_argument("--batch_size", type=int, default=100, help="Batch size for event data processing")
     parser.add_argument("--max_batches", type=int, default=None, help="Maximum number of batches to be processed")
+    parser.add_argument("--table", required=True, default=None, help="Parsing tables to run. Options are: events, shots, dribbles, carries, duels, and passes.")
 
     args = parser.parse_args()
 
-    process_events_in_batches(args.data_dir, args.output_dir, args.batch_size, args.max_batches)
+    process_events_in_batches(args.data_dir, args.output_dir, args.batch_size, args.max_batches, args.table)
