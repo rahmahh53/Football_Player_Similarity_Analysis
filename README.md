@@ -165,47 +165,41 @@ This structure reduces duplication and allows event-specific tables to reference
 
 ## Current Progress
 
+## Current Progress
+
 ### Completed
 
 - Set up the project repository and development environment
 - Downloaded and explored StatsBomb Open Data
-- Examined competition, match, lineup, and event JSON structures
-- Designed the initial normalized relational database schema
-- Connected Jupyter Notebook to MySQL using SQLAlchemy
-- Created core MySQL tables
-- Parsed competition, match, team, player, and event data
-- Built event-specific DataFrames
-- Implemented Parquet-based event batch generation
-- Loaded selected datasets into MySQL
-- Wrote foundational SQL analytics queries
-- Created initial passing and attacking-action analyses
+- Parsed competition, match, lineup, and event JSON data
+- Designed and created the normalized MySQL database schema
+- Built reusable parsing pipelines for core and event data
+- Implemented batch-based Parquet generation for large event datasets
+- Loaded core and event-specific tables into MySQL
+- Validated row counts and relational integrity
+- Created reusable SQL analysis queries
+- Engineered player-level passing, shooting, dribbling, carrying, and duel metrics
+- Built an initial player feature dataset with one row per player
+- Added normalized per-match and success-rate features
 
 ### In Progress
 
-- Finalizing the reusable database-loading pipeline
-- Validating primary-key and foreign-key relationships
-- Consolidating the database schema into reusable SQL files
-- Creating data-quality and validation queries
-- Developing player scouting metrics
-- Engineering role-specific player features
-- Creating player and team summary tables
-- Improving the reproducibility of the ingestion pipeline
+- Expanding the player feature dataset
+- Adding position-aware and role-specific metrics
+- Preparing the feature dataset for Python analysis
+- Improving validation and automated testing
 
 ### Planned
 
-- Player-level feature matrix
-- Per-90 metrics
-- Possession-adjusted metrics
-- Position and role filtering
+- Exploratory data analysis of player features
+- Feature scaling and outlier analysis
 - Player similarity modeling
 - Player archetype clustering
 - Transfer-target ranking
 - MLflow experiment tracking
 - FastAPI inference service
 - Docker deployment
-- Automated tests
 - CI/CD pipeline
-
 ## Planned Scouting Metrics
 
 ### Passing
@@ -274,43 +268,7 @@ Current and planned SQL analyses include:
 - Position-specific player rankings
 
 
-## Repository Structure
-
-```text
-Football_Project/
-│
-├── football/
-│   ├── data/
-│   │   ├── raw_data/
-│   │   └── processed/
-│   │
-│   ├── database/
-│   │   ├── schema.sql
-│   │   ├── analysis_queries.sql
-│   │   └── validation_queries.sql
-│   │
-│   ├── notebooks/
-│   │   ├── 01_explore_events.ipynb
-│   │   ├── 02_explore_data.ipynb
-│   │   └── 03_parse_data.ipynb
-│   │
-│   ├── src/
-│   │   ├── load_config.py
-│   │   ├── load_data.py
-│   │   ├── parse_data.py
-│   │   └── parse_events.py
-│   │
-│   ├── models/
-│   ├── reports/
-│   ├── docker/
-│   ├── tests/
-│   └── requirements.txt
-│
-├── .gitignore
-└── README.md
 ```
-
-Some files shown above represent the intended final repository structure and will be added as the project develops.
 
 ## Data Storage Strategy
 
@@ -335,6 +293,7 @@ The project separates exploratory work from reusable production code:
 - Finalized schema definitions belong in `database/schema.sql`
 - Polished analytical queries belong in `database/analysis_queries.sql`
 - Data-integrity checks belong in `database/validation_queries.sql`
+- The reusable player-level modeling dataset is defined in `database/player_features.sql`
 
 This structure will allow the database and feature pipeline to be rebuilt from the original StatsBomb data.
 
@@ -399,16 +358,15 @@ The exact command-line configuration may change as the reusable pipeline is fina
 
 ## Current Focus
 
-The current focus is building a reliable data foundation for the scouting system.
+The current focus is preparing the engineered player feature dataset for exploratory analysis and machine learning.
 
 This includes:
 
-1. Completing the normalized MySQL database
-2. Validating table relationships and data completeness
-3. Moving exploratory parsing logic into reusable Python modules
-4. Consolidating polished SQL queries
-5. Defining meaningful role-specific scouting features
-6. Building the player-level feature dataset required for modeling
+1. Validating the final player-level feature table
+2. Expanding role-specific scouting metrics
+3. Exporting SQL features into pandas
+4. Analyzing distributions, correlations, and outliers
+5. Preparing features for player similarity and clustering models
 
 ## Long-Term Outcome
 
