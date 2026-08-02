@@ -75,7 +75,6 @@ The complete raw dataset is excluded from version control because of its size an
 - MLflow — planned
 - FastAPI — planned
 - Docker — planned
-- GitHub Actions — planned
 
 ## Project Architecture
 
