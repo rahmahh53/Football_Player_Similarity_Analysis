@@ -19,9 +19,9 @@ Rather than evaluating players using only goals and assists, the system will use
 
 ## Machine Learning Goal
 
-The first planned machine learning component is a **role-aware player similarity system**.
+The primary machine learning goal is to build a role-aware system for recommending potential transfer targets and replacement players.
 
-Given a selected player, the system will rank other players with similar statistical and event-based profiles.
+The current baseline uses standardized player features, Euclidean similarity, and K-Means clustering to explore player profiles and identify broad playing archetypes. These baseline models are used to validate the feature space and establish reference results before developing more advanced similarity and recommendation approaches.
 
 For example:
 
@@ -165,41 +165,63 @@ This structure reduces duplication and allows event-specific tables to reference
 
 ## Current Progress
 
-## Current Progress
-
 ### Completed
 
 - Set up the project repository and development environment
-- Downloaded and explored StatsBomb Open Data
-- Parsed competition, match, lineup, and event JSON data
 - Designed and created the normalized MySQL database schema
 - Built reusable parsing pipelines for core and event data
 - Implemented batch-based Parquet generation for large event datasets
 - Loaded core and event-specific tables into MySQL
-- Validated row counts and relational integrity
 - Created reusable SQL analysis queries
 - Engineered player-level passing, shooting, dribbling, carrying, and duel metrics
-- Built an initial player feature dataset with one row per player
-- Added normalized per-match and success-rate features
+- Built the initial player-level feature dataset
+- Standardized player features for machine learning
+- Implemented a baseline Euclidean player-similarity analysis
+- Implemented a baseline K-Means clustering model
+- Interpreted six data-driven player archetypes
+- Documented the clustering analysis and model limitations
 
 ### In Progress
 
-- Expanding the player feature dataset
-- Adding position-aware and role-specific metrics
-- Preparing the feature dataset for Python analysis
-- Improving validation and automated testing
+- Built the initial player-level feature dataset
+- Standardized player features for machine learning
+- Implemented a baseline Euclidean player-similarity analysis
+- Implemented a baseline K-Means clustering model
+- Interpreted six data-driven player archetypes
+- Documented the clustering analysis and model limitations
 
 ### Planned
 
-- Exploratory data analysis of player features
-- Feature scaling and outlier analysis
-- Player similarity modeling
-- Player archetype clustering
-- Transfer-target ranking
-- MLflow experiment tracking
-- FastAPI inference service
-- Docker deployment
-- CI/CD pipeline
+#### Feature Engineering
+
+- Engineer advanced role-specific scouting metrics
+- Incorporate defensive event statistics (tackles, interceptions, recoveries, pressures)
+- Add possession-adjusted and percentile-based metrics
+- Expand feature normalization using minutes played and per-90 statistics
+
+#### Machine Learning
+
+- Evaluate the baseline K-Means clustering model using silhouette scores and other clustering metrics
+- Explore dimensionality reduction techniques (PCA and UMAP) for player visualization
+- Compare alternative clustering algorithms (Hierarchical Clustering, Gaussian Mixture Models, DBSCAN)
+- Develop a role-aware player recommendation engine
+- Build a transfer-target and replacement-player ranking model
+- Experiment with learned player embeddings for improved similarity search
+
+#### Deployment & MLOps
+
+- Track experiments using MLflow
+- Build a FastAPI inference service
+- Containerize the application with Docker
+- Automate testing and deployment using GitHub Actions
+
+#### Application
+
+- Develop an interactive football scouting dashboard
+- Build player search and comparison interfaces
+- Visualize player archetypes and similarity networks
+- Generate automated scouting reports
+
 ## Planned Scouting Metrics
 
 ### Passing
