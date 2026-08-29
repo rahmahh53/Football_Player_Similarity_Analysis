@@ -1,405 +1,151 @@
 # Football Scouting Intelligence System
 
-An end-to-end football analytics and machine learning project built using StatsBomb Open Data.
+An end-to-end football analytics and machine learning project that uses
+StatsBomb event data to identify player playing styles, discover statistical
+archetypes, and recommend potential replacement players.
 
-This project combines data engineering, relational database design, SQL analytics, feature engineering, machine learning, and MLOps to build a data-driven football scouting system.
+The project covers the full analytics pipeline from raw JSON data and
+relational database design to SQL feature engineering and machine learning.
 
 ## Project Goal
 
-The goal of this project is to develop a football scouting platform that can:
+The system is designed to answer scouting questions such as:
 
-- Evaluate player performance using event-level match data
-- Build role-specific player profiles
-- Compare players across teams, competitions, and seasons
-- Identify players with similar playing styles
-- Recommend potential transfer targets or replacement players
-- Present scouting insights through a deployable application
+> Which players have a similar statistical profile to a target player, and
+> which of them could be strong replacement candidates?
 
-Rather than evaluating players using only goals and assists, the system will use actions such as passes, carries, shots, dribbles, duels, pressures, and defensive contributions to build more complete player profiles.
+Rather than relying only on goals and assists, player profiles are constructed
+from event-level actions including passing, carrying, shooting, dribbling,
+and other aspects of play.
 
-## Machine Learning Goal
-
-The primary machine learning goal is to build a role-aware system for recommending potential transfer targets and replacement players.
-
-The current baseline uses standardized player features, Euclidean similarity, and K-Means clustering to explore player profiles and identify broad playing archetypes. These baseline models are used to validate the feature space and establish reference results before developing more advanced similarity and recommendation approaches.
-
-For example:
-
-> Find midfielders whose passing, ball progression, chance creation, carrying, and defensive profiles are similar to a selected player.
-
-Future versions may include:
-
-- Player archetype clustering
-- Transfer-target recommendation
-- Player performance prediction
-- Role suitability analysis
-- Team-style and player-fit analysis
-
-## Dataset
-
-This project uses the [StatsBomb Open Data](https://github.com/statsbomb/open-data) dataset.
-
-The dataset contains detailed match-level and event-level information, including:
-
-- Competitions
-- Seasons
-- Matches
-- Teams
-- Managers
-- Players
-- Lineups
-- Player positions
-- Passes
-- Carries
-- Shots
-- Dribbles
-- Duels
-- Pressures
-- Ball recoveries
-- Fouls
-- Cards
-- Possession information
-
-The complete raw dataset is excluded from version control because of its size and because it can be downloaded again from the original source.
-
-## Technology Stack
-
-- Python
-- Pandas
-- MySQL
-- SQL
-- SQLAlchemy
-- Jupyter Notebook
-- Parquet
-- Scikit-learn — planned
-- MLflow — planned
-- FastAPI — planned
-- Docker — planned
-
-## Project Architecture
+## Pipeline
 
 ```text
 StatsBomb Open Data
-        │
-        ▼
-Raw JSON Files
-        │
-        ▼
-Data Exploration and Validation
-        │
-        ▼
-Reusable Parsing Pipeline
-(parse_data.py / parse_events.py)
-        │
-        ├────────────────────┐
-        ▼                    ▼
-Normalized DataFrames   Parquet Event Batches
-        │                    │
-        └──────────┬─────────┘
-                   ▼
-             MySQL Database
-                   │
-                   ▼
-        SQL Analysis and Validation
-                   │
-                   ▼
-       Player-Level Feature Engineering
-                   │
-                   ▼
-        Role-Specific Scouting Profiles
-                   │
-                   ▼
-     Player Similarity and Ranking Models
-                   │
-                   ▼
-          MLflow Experiment Tracking
-                   │
-                   ▼
-          FastAPI Scouting Service
-                   │
-                   ▼
-             Docker Deployment
+        ↓
+JSON Parsing & Validation
+        ↓
+Parquet + MySQL
+        ↓
+SQL Player Feature Engineering
+        ↓
+Role-Specific Player Profiles
+        ↓
+Similarity & Performance Modeling
+        ↓
+PCA + Player Archetype Clustering
+        ↓
+Replacement Recommendations
 ```
 
-## Database Design
+## Current Modeling Approach
 
-The relational database separates match metadata, player information, and event-specific information into normalized tables.
+The current interpretable baseline uses:
 
-### Core Tables
+- Role-specific player comparison
+- Minimum 20-match reliability filtering
+- Standardized player features
+- Euclidean-distance similarity
+- Role-relative percentile performance scores
+- PCA for visualization and interpretation
+- K-Means for player-archetype discovery
 
-- `competitions`
-- `seasons`
-- `countries`
-- `teams`
-- `managers`
-- `matches`
-- `players`
-- `lineups`
-- `player_positions`
-- `team_managers`
-- `cards`
+For midfielders, the current similarity space uses:
 
-### Event Tables
+- Pass completion rate
+- Progressive passes per match
+- Passes per match
+- Progressive carries per match
+- Dribble success rate
 
-- `events`
-- `passes`
-- `shots`
-- `carries`
-- `dribbles`
-- `duels`
+The replacement model currently combines **75% player similarity** with
+**25% role-relative performance**.
 
-General event information is stored in the `events` table, while event-specific attributes are stored in the corresponding subtype tables.
+## Case Study: Replacing Xavi
+
+Xavi Hernández is used as the initial case study for the midfielder
+recommendation system.
+
+The baseline model identifies players including **Marco Verratti, Granit
+Xhaka, Luka Modrić, Toni Kroos, and Santiago Cazorla** among the strongest
+replacement candidates.
+
+PCA provides an interpretable two-dimensional view of the player space.
+The first two principal components retain approximately **74% of the variance**
+in the five midfielder features.
+
+![Xavi replacement candidates](reports/figures/xavi_replacement_pca.png)
+
+## Midfielder Archetypes
+
+K-Means clustering was used to discover statistical midfielder archetypes
+from the same standardized feature space.
+
+The resulting clusters show distinct patterns of passing involvement,
+ball progression, carrying, and dribbling behavior.
+
+Xavi appears as an extreme member of the high-volume progressive-passing
+group.
+
+![Midfielder archetypes](reports/figures/midfielder_archetypes_pca.png)
+
+## Technology Stack
+
+**Data Engineering:** Python, Pandas, Parquet, SQLAlchemy  
+**Database & Analytics:** MySQL, SQL  
+**Machine Learning:** Scikit-learn, NumPy  
+**Visualization:** Matplotlib, Jupyter Notebook
+
+## Repository Structure
 
 ```text
-events.event_id
-        │
-        ├── passes.event_id
-        ├── shots.event_id
-        ├── carries.event_id
-        ├── dribbles.event_id
-        └── duels.event_id
+database/       SQL schema, analysis, validation, and player features
+notebooks/      Exploratory analysis and modeling
+src/            Reusable parsing and data pipeline code
+reports/figures/ Model and scouting visualizations
 ```
 
-This structure reduces duplication and allows event-specific tables to reference the general event record through `event_id`.
+## Current Status
 
-## Current Progress
+Completed:
 
-### Completed
+- Normalized StatsBomb relational database
+- Reusable JSON → Parquet → MySQL pipeline
+- SQL player-level feature engineering
+- Role and primary-position inference
+- Reliability-aware player comparison
+- Player similarity and replacement ranking
+- PCA midfielder analysis
+- K-Means midfielder archetype discovery
 
-- Set up the project repository and development environment
-- Designed and created the normalized MySQL database schema
-- Built reusable parsing pipelines for core and event data
-- Implemented batch-based Parquet generation for large event datasets
-- Loaded core and event-specific tables into MySQL
-- Created reusable SQL analysis queries
-- Engineered player-level passing, shooting, dribbling, carrying, and duel metrics
-- Built the initial player-level feature dataset
-- Standardized player features for machine learning
-- Implemented a baseline Euclidean player-similarity analysis
-- Implemented a baseline K-Means clustering model
-- Interpreted six data-driven player archetypes
-- Documented the clustering analysis and model limitations
+The current work is converting the validated modeling experiments into
+reusable scouting modules and expanding the system beyond midfielders.
 
-### In Progress
+## Model Roadmap
 
-- Built the initial player-level feature dataset
-- Standardized player features for machine learning
-- Implemented a baseline Euclidean player-similarity analysis
-- Implemented a baseline K-Means clustering model
-- Interpreted six data-driven player archetypes
-- Documented the clustering analysis and model limitations
+The interpretable baseline will be compared against more advanced approaches,
+including:
 
-### Planned
+- Cosine similarity and nearest-neighbor retrieval
+- Alternative clustering algorithms
+- UMAP visualization
+- Role-specific models for defenders, forwards, and goalkeepers
+- Learned player embeddings / autoencoders
+- Team-style and tactical-fit modeling
+- Transfer-target ranking
 
-#### Feature Engineering
+Longer term, the modeling pipeline will be exposed through a FastAPI service,
+tracked with MLflow, containerized with Docker, and connected to an interactive
+scouting interface.
 
-- Engineer advanced role-specific scouting metrics
-- Incorporate defensive event statistics (tackles, interceptions, recoveries, pressures)
-- Add possession-adjusted and percentile-based metrics
-- Expand feature normalization using minutes played and per-90 statistics
+## Data
 
-#### Machine Learning
+The project uses
+[StatsBomb Open Data](https://github.com/statsbomb/open-data).
 
-- Evaluate the baseline K-Means clustering model using silhouette scores and other clustering metrics
-- Explore dimensionality reduction techniques (PCA and UMAP) for player visualization
-- Compare alternative clustering algorithms (Hierarchical Clustering, Gaussian Mixture Models, DBSCAN)
-- Develop a role-aware player recommendation engine
-- Build a transfer-target and replacement-player ranking model
-- Experiment with learned player embeddings for improved similarity search
+Large raw and processed datasets are excluded from version control and can
+be reconstructed from the original StatsBomb data.
 
-#### Deployment & MLOps
+## Status
 
-- Track experiments using MLflow
-- Build a FastAPI inference service
-- Containerize the application with Docker
-- Automate testing and deployment using GitHub Actions
-
-#### Application
-
-- Develop an interactive football scouting dashboard
-- Build player search and comparison interfaces
-- Visualize player archetypes and similarity networks
-- Generate automated scouting reports
-
-## Planned Scouting Metrics
-
-### Passing
-
-- Pass attempts
-- Completed passes
-- Pass-completion percentage
-- Progressive passes
-- Average pass length
-- Final-third passes
-- Passes into the penalty area
-- Key passes
-- Crosses
-- Switches of play
-
-### Ball Progression
-
-- Progressive carries
-- Carry distance
-- Carries into the final third
-- Carries into the penalty area
-- Successful dribbles
-- Dribble success percentage
-
-### Attacking Contribution
-
-- Shots
-- Shots on target
-- Goals
-- Expected goals, where available
-- Shot-creating actions
-- Completed attacking actions
-- Penalty-area involvement
-
-### Defensive Contribution
-
-- Duels
-- Duel success percentage
-- Pressures
-- Ball recoveries
-- Interceptions
-- Tackles
-- Counterpressing actions
-
-Where appropriate, metrics will be normalized using:
-
-- Per-90-minute rates
-- Per-possession rates
-- Team-possession adjustments
-- Success percentages
-- Position-group percentile rankings
-
-## Example SQL Analyses
-
-Current and planned SQL analyses include:
-
-- Passing leaders
-- Pass-completion leaders
-- Progressive-passing leaders
-- Average pass length
-- Successful dribblers
-- Player attacking actions
-- Home and away performance
-- Competition summaries
-- Event-type distributions
-- Position-specific player rankings
-
-
-```
-
-## Data Storage Strategy
-
-The project uses different storage formats for different purposes:
-
-- **JSON** for the original StatsBomb source data
-- **Pandas DataFrames** during exploration and transformation
-- **Parquet** for efficient intermediate event storage
-- **MySQL** for relational analysis and reusable SQL queries
-- **Serialized model artifacts** for machine learning inference
-
-Raw and complete processed datasets are excluded from Git because of their size.
-
-Small sample datasets may be added later to demonstrate the pipeline.
-
-## Reproducibility
-
-The project separates exploratory work from reusable production code:
-
-- Exploratory analysis remains in `notebooks/`
-- Reusable parsing and loading logic belongs in `src/`
-- Finalized schema definitions belong in `database/schema.sql`
-- Polished analytical queries belong in `database/analysis_queries.sql`
-- Data-integrity checks belong in `database/validation_queries.sql`
-- The reusable player-level modeling dataset is defined in `database/player_features.sql`
-
-This structure will allow the database and feature pipeline to be rebuilt from the original StatsBomb data.
-
-## Running the Project
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/rahmahh53/Football_Project.git
-cd Football_Project/football
-```
-
-### 2. Create and activate a Python environment
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install the dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure MySQL
-
-Create a MySQL database:
-
-```sql
-CREATE DATABASE football_db;
-```
-
-Create a dedicated database user and grant access:
-
-```sql
-CREATE USER 'notebook_user'@'localhost'
-IDENTIFIED BY 'your_password';
-
-GRANT ALL PRIVILEGES
-ON football_db.*
-TO 'notebook_user'@'localhost';
-```
-
-### 5. Run the notebooks
-
-Start Jupyter Notebook:
-
-```bash
-jupyter notebook
-```
-
-Use the notebooks for data exploration, parsing validation, and SQL analysis.
-
-### 6. Generate event Parquet files
-
-```bash
-python src/parse_events.py
-```
-
-The exact command-line configuration may change as the reusable pipeline is finalized.
-
-## Current Focus
-
-The current focus is preparing the engineered player feature dataset for exploratory analysis and machine learning.
-
-This includes:
-
-1. Validating the final player-level feature table
-2. Expanding role-specific scouting metrics
-3. Exporting SQL features into pandas
-4. Analyzing distributions, correlations, and outliers
-5. Preparing features for player similarity and clustering models
-
-## Long-Term Outcome
-
-The completed system will allow a user to select a player, position, or desired playing profile and receive:
-
-- A statistical scouting report
-- Role-specific strengths and weaknesses
-- Percentile comparisons
-- Similar-player rankings
-- Potential replacement candidates
-- Supporting event-level evidence
-
-## Project Status
-
-This project is under active development.
+Active development.
