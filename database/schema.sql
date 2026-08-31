@@ -157,3 +157,15 @@ create table if not exists duels(
 
     foreign key (event_id) references events(event_id)
 );
+
+create table if not exists player_appearances(
+    match_id int not null,
+    team_id int not null,
+    player_id int not null,
+
+    primary key (match_id, team_id, player_id),
+
+    foreign key (match_id) references matches(match_id),
+    foreign key (team_id) references teams(team_id),
+    foreign key (player_id) references players(player_id)
+);
