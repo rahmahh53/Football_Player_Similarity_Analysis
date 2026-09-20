@@ -4,8 +4,8 @@ An end-to-end football analytics system that identifies statistically similar pl
 
 **[Live Demo](https://football-scouting-intelligence.streamlit.app/)**
 
+![Football Scouting Intelligence Dashboard](reports/figures/scouting_dashboard.png)
 ![Football Scouting Intelligence Dashboard](reports/figures/scouting_dashboard1.png)
-![Football Scouting Intelligence Dashboard](reports/figures/scouting_dashboard2.png)
 
 Built with **Python, SQL, MySQL, scikit-learn, FastAPI, Docker, Streamlit, Render, and AWS**.
 
