@@ -3,7 +3,7 @@ import requests
 import streamlit as st
 import plotly.graph_objects as go
 
-API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
+API_URL = st.secrets.get("API_URL", os.getenv("API_URL", "http://127.0.0.1:8000"))
 
 st.set_page_config(page_title="Football Scouting Intelligence", page_icon="⚽", layout="wide")
 st.title("Football Scouting Intelligence")
