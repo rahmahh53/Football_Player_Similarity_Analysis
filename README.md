@@ -1,151 +1,277 @@
-# Football Scouting Intelligence System
+# Football Scouting Intelligence
 
-An end-to-end football analytics and machine learning project that uses
-StatsBomb event data to identify player playing styles, discover statistical
-archetypes, and recommend potential replacement players.
+An end-to-end football analytics system that identifies statistically similar players and recommends potential replacements using event-level performance data.
 
-The project covers the full analytics pipeline from raw JSON data and
-relational database design to SQL feature engineering and machine learning.
+**[Live Demo](https://football-scouting-intelligence.streamlit.app/)**
 
-## Project Goal
+![Football Scouting Intelligence Dashboard](reports/figures/scouting_dashboard1.png)
+![Football Scouting Intelligence Dashboard](reports/figures/scouting_dashboard2.png)
 
-The system is designed to answer scouting questions such as:
+Built with **Python, SQL, MySQL, scikit-learn, FastAPI, Docker, Streamlit, Render, and AWS**.
 
-> Which players have a similar statistical profile to a target player, and
-> which of them could be strong replacement candidates?
+---
 
-Rather than relying only on goals and assists, player profiles are constructed
-from event-level actions including passing, carrying, shooting, dribbling,
-and other aspects of play.
+## Overview
 
-## Pipeline
+Football Scouting Intelligence transforms StatsBomb event data into player performance profiles and uses those profiles to find statistically similar players.
+
+The system covers the full pipeline:
+
+**StatsBomb Data → SQL Feature Engineering → Player Profiles → Model Evaluation → Similarity Retrieval → FastAPI → Interactive Dashboard**
+
+Users can:
+
+- Search across 1,633 qualified player profiles
+- Find replacement candidates within the same role, exact position, or full player population
+- Compare candidates across 15 performance metrics
+- View role-relative percentile profiles
+- Inspect which attributes make two players most similar and where they differ
+
+---
+
+## Results
+
+The final scouting population contains:
+
+- **88,513** eligible player-match observations
+- **1,633** reliable player profiles
+- **15** engineered performance features
+- **17** automated tests covering API, recommendation, explanation, and minutes logic
+
+Several representation and retrieval approaches were evaluated rather than assuming the most complex model would perform best.
+
+| Method | Role Coherence@10 | Random Split Stability@10 | Temporal Stability@10 |
+|---|---:|---:|---:|
+| Euclidean | **66.26%** | **12.46%** | **8.62%** |
+| Cosine | 65.17% | 10.90% | 7.58% |
+| PCA | 63.10% | 8.60% | 5.88% |
+| Autoencoder | 58.58% | 5.06% | 3.81% |
+| Random baseline | 29.62% | — | — |
+
+**Standardized Euclidean distance** was selected for production because it produced the strongest neighborhood coherence and stability across the retrieval evaluations.
+
+A 5-dimensional autoencoder was also trained and reduced held-out reconstruction MSE by **37.5% compared with 5-component PCA**. However, its learned embeddings produced weaker scouting neighborhoods.
+
+This distinction was important: **better compression did not automatically produce better player recommendations**, so the production method was selected using downstream task performance rather than model complexity.
+
+---
+
+## Scouting Features
+
+Player profiles are built from passing, progression, carrying, dribbling, shooting, and duel performance:
+
+- Passes / 90 and pass completion
+- Progressive passes / 90 and progressive pass rate
+- Carries / 90 and progressive carries / 90
+- Dribbles / 90 and dribble success
+- Shots / 90, goals / 90, and xG / 90
+- Average xG / shot
+- Duels / 90, successful duels / 90, and duel success
+
+Players must have at least **20 qualifying matches**, with a qualifying player-match requiring at least **20 minutes played**.
+
+---
+
+## System Architecture
 
 ```text
-StatsBomb Open Data
-        ↓
-JSON Parsing & Validation
-        ↓
-Parquet + MySQL
-        ↓
-SQL Player Feature Engineering
-        ↓
-Role-Specific Player Profiles
-        ↓
-Similarity & Performance Modeling
-        ↓
-PCA + Player Archetype Clustering
-        ↓
-Replacement Recommendations
+StatsBomb Event Data
+        │
+        ▼
+   Data Parsing
+        │
+        ▼
+      MySQL
+        │
+        ▼
+SQL Feature Engineering
+        │
+        ▼
+Player-Match Profiles
+   88,513 observations
+        │
+        ▼
+Player Aggregation
+   1,633 profiles
+        │
+        ▼
+Model Evaluation
+ ┌────────┬────────┬─────┬─────────────┐
+ │Euclidean│ Cosine │ PCA │ Autoencoder │
+ └────────┴────────┴─────┴─────────────┘
+        │
+        ▼
+Standardized Euclidean Retrieval
+        │
+        ▼
+ Explainable Scouting Engine
+        │
+        ▼
+      FastAPI
+        │
+        ▼
+ Interactive Streamlit Dashboard
 ```
 
-## Current Modeling Approach
+The serving layer uses a precomputed Parquet artifact containing the qualified player profiles, keeping the production API independent of the development database.
 
-The current interpretable baseline uses:
+---
 
-- Role-specific player comparison
-- Minimum 20-match reliability filtering
-- Standardized player features
-- Euclidean-distance similarity
-- Role-relative percentile performance scores
-- PCA for visualization and interpretation
-- K-Means for player-archetype discovery
+## Interactive Dashboard
 
-For midfielders, the current similarity space uses:
+The deployed application allows users to select a target player, control the comparison scope, retrieve ranked replacement candidates, and interactively compare statistical profiles.
 
-- Pass completion rate
-- Progressive passes per match
-- Passes per match
-- Progressive carries per match
-- Dribble success rate
+Recommendations include:
 
-The replacement model currently combines **75% player similarity** with
-**25% role-relative performance**.
+- Similarity distance
+- Player role
+- Number of qualifying matches
+- Most similar attributes
+- Largest statistical differences
+- Role-relative percentile comparison
 
-## Case Study: Replacing Xavi
+Lower standardized Euclidean distance indicates a more similar statistical playing profile.
 
-Xavi Hernández is used as the initial case study for the midfielder
-recommendation system.
+**[Open the live application](https://football-scouting-intelligence.streamlit.app/)**
 
-The baseline model identifies players including **Marco Verratti, Granit
-Xhaka, Luka Modrić, Toni Kroos, and Santiago Cazorla** among the strongest
-replacement candidates.
+> The free API hosting instance may need a short startup period after inactivity.
 
-PCA provides an interpretable two-dimensional view of the player space.
-The first two principal components retain approximately **74% of the variance**
-in the five midfielder features.
+---
 
-![Xavi replacement candidates](reports/figures/xavi_replacement_pca.png)
+## API
 
-## Midfielder Archetypes
+The recommendation engine is exposed through FastAPI.
 
-K-Means clustering was used to discover statistical midfielder archetypes
-from the same standardized feature space.
+Example endpoints:
 
-The resulting clusters show distinct patterns of passing involvement,
-ball progression, carrying, and dribbling behavior.
+```text
+GET /health
+GET /players
+GET /players/{player_id}/profile
+GET /players/{player_id}/percentiles
+GET /players/{player_id}/replacements
+```
 
-Xavi appears as an extreme member of the high-volume progressive-passing
-group.
+Example:
 
-![Midfielder archetypes](reports/figures/midfielder_archetypes_pca.png)
+```text
+GET /players/20131/replacements?top_n=5&position_filter=role
+```
 
-## Technology Stack
+The API supports comparisons across:
 
-**Data Engineering:** Python, Pandas, Parquet, SQLAlchemy  
-**Database & Analytics:** MySQL, SQL  
-**Machine Learning:** Scikit-learn, NumPy  
-**Visualization:** Matplotlib, Jupyter Notebook
+- `role` — same broad playing role
+- `position` — same primary position
+- unrestricted player population
+
+---
+
+## Deployment
+
+The API is packaged as a Docker container and deployed publicly through Render, while the interactive frontend is hosted on Streamlit Community Cloud.
+
+The API container was also deployed and verified on **AWS ECS/Fargate**, with the image stored in **Amazon ECR**, providing an additional production deployment implementation.
+
+Docker optimization reduced:
+
+- Image size from approximately **848 MB to 613 MB**
+- Build context from **15.58 GB to kilobytes**
+
+The production container contains only the API source, dependencies, and precomputed scouting artifact rather than the raw dataset, notebooks, tests, or development database.
+
+---
 
 ## Repository Structure
 
 ```text
-database/       SQL schema, analysis, validation, and player features
-notebooks/      Exploratory analysis and modeling
-src/            Reusable parsing and data pipeline code
-reports/figures/ Model and scouting visualizations
+database/                  SQL schema, feature engineering, and validation
+data/artifacts/            Production scouting profiles
+notebooks/                 Exploration and model experiments
+reports/                   Evaluation outputs and figures
+scripts/                   Artifact generation and pipeline verification
+
+src/
+├── api/                   FastAPI application
+├── dashboard/             Streamlit interface
+├── data/                  Data access
+├── evaluation/            Evaluation metrics
+├── features/              Player feature/minutes logic
+└── scouting/              Retrieval and explanation engine
+
+tests/                     Automated test suite
+Dockerfile                 Production API image
 ```
 
-## Current Status
+---
 
-Completed:
+## Running Locally
 
-- Normalized StatsBomb relational database
-- Reusable JSON → Parquet → MySQL pipeline
-- SQL player-level feature engineering
-- Role and primary-position inference
-- Reliability-aware player comparison
-- Player similarity and replacement ranking
-- PCA midfielder analysis
-- K-Means midfielder archetype discovery
+Install the API dependencies:
 
-The current work is converting the validated modeling experiments into
-reusable scouting modules and expanding the system beyond midfielders.
+```bash
+pip install -r requirements-api.txt
+```
 
-## Model Roadmap
+Start FastAPI:
 
-The interpretable baseline will be compared against more advanced approaches,
-including:
+```bash
+uvicorn src.api.main:app --reload
+```
 
-- Cosine similarity and nearest-neighbor retrieval
-- Alternative clustering algorithms
-- UMAP visualization
-- Role-specific models for defenders, forwards, and goalkeepers
-- Learned player embeddings / autoencoders
-- Team-style and tactical-fit modeling
-- Transfer-target ranking
+In another terminal, install the dashboard dependencies:
 
-Longer term, the modeling pipeline will be exposed through a FastAPI service,
-tracked with MLflow, containerized with Docker, and connected to an interactive
-scouting interface.
+```bash
+pip install -r requirements-dashboard.txt
+```
+
+Then start Streamlit:
+
+```bash
+streamlit run src/dashboard/app.py
+```
+
+The dashboard defaults to:
+
+```text
+http://127.0.0.1:8000
+```
+
+for the local API and supports a configurable `API_URL` for deployed environments.
+
+### Docker
+
+Build the API image:
+
+```bash
+docker build -t football-scouting-api .
+```
+
+Run it:
+
+```bash
+docker run --rm -p 8000:8000 football-scouting-api
+```
+
+Then visit:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
 
 ## Data
 
-The project uses
-[StatsBomb Open Data](https://github.com/statsbomb/open-data).
+This project uses **StatsBomb Open Data**.
 
-Large raw and processed datasets are excluded from version control and can
-be reconstructed from the original StatsBomb data.
+StatsBomb event data provides detailed match events including passes, carries, shots, dribbles, duels, player information, positions, and match metadata.
 
-## Status
+This repository does not require the raw dataset for production serving; the deployed recommendation system uses a precomputed scouting artifact.
 
-Active development.
+---
+
+## Key Takeaway
+
+This project was designed as more than a similarity-model experiment. It evaluates the complete decision pipeline from raw football events through feature engineering, representation learning, retrieval validation, API serving, containerization, cloud deployment, and an interactive scouting interface.
+
+A central finding was that the more complex representation was not the strongest retrieval system: although the autoencoder substantially improved reconstruction over PCA, standardized Euclidean distance produced more coherent and stable player neighborhoods and was therefore selected for production.
